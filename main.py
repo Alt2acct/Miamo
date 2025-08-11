@@ -37,10 +37,9 @@ AI_BOOST_LINK = os.getenv("AI_BOOST_LINK")  # For X package special content
 
 # Predefined payment accounts
 PAYMENT_ACCOUNTS = {
-    "Nigeria (Kuda)": "🇳🇬 Account: 2036035854\nBank: Kuda Bank\nName: Eluem, Chike Olanrewaju",
-    "Nigeria (Zenith)": "🇳🇬 Account: 2267515466\nBank: Zenith Bank\nName: Chike Eluem Olanrewaju",
-    "Nigeria (OPay)": "🇳🇬 Account: 8051454564\nBank: OPay\nName: Chike Eluem Olanrewaju",
-}
+    "Nigeria (OPAY)": "🇳🇬 Account: 6141752284\nBank: OPAY\nName: Victor Anyanwu C.",
+    "Nigeria (PALMPAY)": "🇳🇬 Account: 8995878610\nBank: PALMPAY\nName: Victor Anyanwu C.",
+)
 
 # Help topics
 HELP_TOPICS = {
@@ -138,9 +137,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Database error in start: {e}")
         await update.message.reply_text("An error occurred. Please try again.")
         return
-    keyboard = [[InlineKeyboardButton("🚀 Proceed", callback_data="menu")]]
+    keyboard = [[InlineKeyboardButton("🚀 Get Started", callback_data="menu")]]
     await update.message.reply_text(
-        "Welcome to the Bot!\n\nChoose your package and start today.",
+        "Welcome to Mi’amor!\n\nGet paid for connecting, creating and having fun online.\n 💖Getting matched → earn $2.5 to $5 per match\n🔥Daily login streaks → earn $1.5 daily for simply logging in\n🧠Daily trivia & quizzes → earn $1–$5 depending on score\n🎮Game modules → earn up to $20 for every game played\n🏆Challenges → earn up to $100 for every weekly challenge\n👥Invite friends and more!\n\nChoose from the exclusive list of packages with the higher package unlockng the full Miamor experience\nClick the button below to:",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
 
@@ -192,8 +191,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(chat_id, "You are already registered.")
                 return
             keyboard = [
-                [InlineKeyboardButton("🚀X (₦14,000)", callback_data="reg_x")],
-                [InlineKeyboardButton("✈️Standard (₦9,000)", callback_data="reg_standard")],
+                [InlineKeyboardButton("🚀Miamor Ultra (₦14,000)", callback_data="reg_x")],
+                [InlineKeyboardButton("✈️Miamor Plus (₦9,000)", callback_data="reg_standard")],
                 [InlineKeyboardButton("🔙 Main Menu", callback_data="menu")],
             ]
             await query.edit_message_text("Choose your package:", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -265,7 +264,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cursor.execute("SELECT package FROM users WHERE chat_id=%s", (chat_id,))
             package = cursor.fetchone()[0]
             if package == "X":
-                text = f"Access your special X content here: {AI_BOOST_LINK}"
+                text = f"Access your special Ultra content here: {AI_BOOST_LINK}"
             else:
                 text = f"Access your content here: {SITE_LINK}"
             await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]]))
@@ -384,7 +383,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cursor.execute("SELECT payment_status, package FROM users WHERE chat_id=%s", (chat_id,))
         user = cursor.fetchone()
         keyboard = [
-            [InlineKeyboardButton("💸 Register & Make Payment", callback_data="package_selector")],
+            [InlineKeyboardButton("💸 Proceed to Payment for Registeration", callback_data="package_selector")],
             [InlineKeyboardButton("❓ Help", callback_data="help")],
         ]
         if user and user[0] == 'registered':
@@ -392,7 +391,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("📂 Access Content", callback_data="access_content")],
                 [InlineKeyboardButton("❓ Help", callback_data="help")],
             ]
-        text = "Select an option below:"
+        text = "LOVE is in the air with two packages to fuel your LOVE METER\n\n 1. 𝚃𝚑𝚎 𝚙𝚕𝚞𝚜 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n2. 𝚃𝚑𝚎 𝚄𝚕𝚝𝚛𝚊 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n\n*MIAMOR PLUS✨*\n💰Access Fee/Signup Fee: N10,000\n💰 Onboarding Gift🎁: N8000\n💰Connection Commission/REF: N9100\n💰1st Level Spillover: N200\n💰2nd Level Spillover: N100\n💰Game modules: N2,000 daily\n💰Matching ads-on: N2,000 daily\n💰Open love hamper: N5,000 on every love box opened\n💰Tiktok/fb lovers share: N1,500 per 5,000 views.\n\n*MIAMOR ULTRA*\n💰Access Fee/Signup Fee: N14000\n💰 Onboarding Gift🎁: N12500\n💰Connection Commission/REF: N12500\n💰1st Level Spillover: N400\n💰2nd Level Spillover: N150\n💰Game modules: N5000 daily\n💰Matching ads-on: N3000 daily\n💰Open love hamper: N10,000 on every love hamper/box opened\n💰Tiktok/fb lovers share: N2500 per 5,000 views.\n\n Make a selection in the next menu to get started on your earnings"
         if update.callback_query:
             await update.callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
