@@ -39,7 +39,7 @@ AI_BOOST_LINK = os.getenv("AI_BOOST_LINK")  # For X package special content
 PAYMENT_ACCOUNTS = {
     "Nigeria (OPAY)": "🇳🇬 Account: 6141752284\nBank: OPAY\nName: Victor Anyanwu C.",
     "Nigeria (PALMPAY)": "🇳🇬 Account: 8995878610\nBank: PALMPAY\nName: Victor Anyanwu C.",
-)
+}
 
 # Help topics
 HELP_TOPICS = {
