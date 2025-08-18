@@ -147,6 +147,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("An error occurred. Please try again.")
         return
     keyboard = [[InlineKeyboardButton("🚀 How It Works", callback_data="menu")]]
+    # Replace the text below with your new write-up for /start
     await update.message.reply_text(
         "Welcome to Mi’amor!\n\nGet paid for connecting, creating and having fun online.\n"
         " 💖Getting matched → earn $2.5 to $5 per match\n"
@@ -252,7 +253,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         elif data == "show_account_selection":
-            package = user_state[chat_id].get('package', '')
+            package = user_state.get(chat_id, {}).get('package', '')
             if not package:
                 await query.edit_message_text(
                     "Please select a package first.",
@@ -293,7 +294,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(user_chat_id, "Your payment is still being reviewed. Please check back later.")
         elif data == "access_content":
             cursor.execute("SELECT package FROM users WHERE chat_id=%s", (chat_id,))
-            package = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            if not result:
+                await query.edit_message_text("Error: User not found. Please contact admin.")
+                return
+            package = result[0]
             if package == "X":
                 text = f"Access your special Ultra content here: {AI_BOOST_LINK}"
             else:
@@ -318,34 +323,55 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Message handlers
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
-    if 'expecting' not in user_state.get(chat_id, {}):
+    log_interaction(chat_id, "photo_received")
+    
+    # Check if user_state exists and has the required keys
+    if chat_id not in user_state or 'expecting' not in user_state[chat_id]:
+        logger.warning(f"No expecting state for chat_id: {chat_id}")
+        await update.message.reply_text("Error: No payment process in progress. Please select a package and account first.")
         return
     expecting = user_state[chat_id]['expecting']
+    
+    if expecting != 'reg_screenshot':
+        logger.warning(f"Unexpected state for chat_id: {chat_id}, expecting: {expecting}")
+        await update.message.reply_text("Error: Not expecting a screenshot at this time. Please follow the payment process.")
+        return
+    
+    # Validate required user_state keys
+    if 'package' not in user_state[chat_id] or 'selected_account' not in user_state[chat_id]:
+        logger.error(f"Missing package or selected_account in user_state for chat_id: {chat_id}")
+        await update.message.reply_text("Error: Payment process incomplete. Please start over by selecting a package.")
+        if chat_id in user_state:
+            del user_state[chat_id]
+        return
+    
     photo_file = update.message.photo[-1].file_id
     try:
-        if expecting == 'reg_screenshot':
-            cursor.execute(
-                "INSERT INTO payments (chat_id, package, payment_account) VALUES (%s, %s, %s) RETURNING id",
-                (chat_id, user_state[chat_id]['package'], user_state[chat_id]['selected_account'])
-            )
-            payment_id = cursor.fetchone()[0]
-            conn.commit()
-            keyboard = [
-                [InlineKeyboardButton("Approve", callback_data=f"approve_reg_{chat_id}")],
-                [InlineKeyboardButton("Pending", callback_data=f"pending_reg_{chat_id}")],
-            ]
-            await context.bot.send_photo(
-                ADMIN_ID,
-                photo_file,
-                caption=f"📸 Registration Payment from @{update.effective_user.username or 'Unknown'} (chat_id: {chat_id})",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-            await update.message.reply_text("✅ Screenshot received! Awaiting admin approval.")
-            del user_state[chat_id]['expecting']
-            log_interaction(chat_id, "photo_upload")
+        cursor.execute(
+            "INSERT INTO payments (chat_id, package, payment_account) VALUES (%s, %s, %s) RETURNING id",
+            (chat_id, user_state[chat_id]['package'], user_state[chat_id]['selected_account'])
+        )
+        payment_id = cursor.fetchone()[0]
+        conn.commit()
+        keyboard = [
+            [InlineKeyboardButton("Approve", callback_data=f"approve_reg_{chat_id}")],
+            [InlineKeyboardButton("Pending", callback_data=f"pending_reg_{chat_id}")],
+        ]
+        await context.bot.send_photo(
+            ADMIN_ID,
+            photo_file,
+            caption=f"📸 Registration Payment from @{update.effective_user.username or 'Unknown'} (chat_id: {chat_id})",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        await update.message.reply_text("✅ Screenshot received! Awaiting admin approval.")
+        del user_state[chat_id]['expecting']  # Clear only the expecting state
+        log_interaction(chat_id, "photo_upload_success")
+    except psycopg.Error as e:
+        logger.error(f"Database error in handle_photo: {e}")
+        await update.message.reply_text("Database error occurred. Please try again or contact admin.")
     except Exception as e:
         logger.error(f"Error in handle_photo: {e}")
-        await update.message.reply_text("An error occurred. Please try again or contact admin.")
+        await update.message.reply_text("An error occurred while processing your screenshot. Please try again or contact admin.")
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
@@ -426,6 +452,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("📂 Access Content", callback_data="access_content")],
                 [InlineKeyboardButton("❓ Help", callback_data="help")],
             ]
+        # Replace the text below with your new write-up for show_main_menu
         text = (
             "🥰❤️💕 LOVE is in the air with two packages to fuel your LOVE METER\n\n"
             "1. 𝚃𝚑𝚎 𝚙𝚕𝚞𝚜 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n2. 𝚃𝚑𝚎 𝚄𝚕𝚝𝚛𝚊 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n\n"
@@ -487,6 +514,11 @@ def main():
     except Exception as e:
         logger.error(f"Error in main: {e}")
         print("Failed to start bot. Check logs for details.")
+    finally:
+        # Close database connection on shutdown
+        if 'conn' in globals():
+            conn.close()
+            logger.info("Database connection closed.")
 
 if __name__ == "__main__":
     main()
