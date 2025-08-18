@@ -43,13 +43,21 @@ PAYMENT_ACCOUNTS = {
 
 # Help topics
 HELP_TOPICS = {
-    "how_to_pay": {"label": "How to Pay", "type": "text", "text": "Payments can be made via bank transfer. Select an account from the options provided after choosing your package."},
-    "register": {"label": "Registration Process", "type": "text", "text": (
-        "1. /start → choose package\n"
-        "2. Pay via your selected account → upload screenshot\n"
-        "3. Wait for approval, then send details\n"
-        "4. Receive credentials and access!"
-    )},
+    "how_to_pay": {
+        "label": "How to Pay",
+        "type": "text",
+        "text": "Payments can be made via bank transfer. Select an account from the options provided after choosing your package."
+    },
+    "register": {
+        "label": "Registration Process",
+        "type": "text",
+        "text": (
+            "1. /start → choose package\n"
+            "2. Pay via your selected account → upload screenshot\n"
+            "3. Wait for approval, then send details\n"
+            "4. Receive credentials and access!"
+        )
+    },
 }
 
 # Database setup with PostgreSQL
@@ -70,33 +78,34 @@ try:
 
     # Users table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        chat_id BIGINT PRIMARY KEY,
-        name TEXT,
-        username TEXT,
-        email TEXT,
-        phone TEXT,
-        package TEXT,
-        payment_status TEXT DEFAULT 'new',
-        approved_at TIMESTAMP,
-        registration_date TIMESTAMP
-    )
+        CREATE TABLE IF NOT EXISTS users (
+            chat_id BIGINT PRIMARY KEY,
+            name TEXT,
+            username TEXT,
+            email TEXT,
+            phone TEXT,
+            package TEXT,
+            payment_status TEXT DEFAULT 'new',
+            approved_at TIMESTAMP,
+            registration_date TIMESTAMP
+        )
     """)
 
     # Payments table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS payments (
-        id SERIAL PRIMARY KEY,
-        chat_id BIGINT,
-        package TEXT,
-        payment_account TEXT,
-        status TEXT DEFAULT 'pending_payment',
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        approved_at TIMESTAMP
-    )
+        CREATE TABLE IF NOT EXISTS payments (
+            id SERIAL PRIMARY KEY,
+            chat_id BIGINT,
+            package TEXT,
+            payment_account TEXT,
+            status TEXT DEFAULT 'pending_payment',
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            approved_at TIMESTAMP
+        )
     """)
 
     conn.commit()
+
 except psycopg.Error as e:
     logging.error(f"Database error: {e}")
     raise
@@ -137,9 +146,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Database error in start: {e}")
         await update.message.reply_text("An error occurred. Please try again.")
         return
-    keyboard = [[InlineKeyboardButton("🚀 Get Started", callback_data="menu")]]
+    keyboard = [[InlineKeyboardButton("🚀 How It Works", callback_data="menu")]]
     await update.message.reply_text(
-        "Welcome to Mi’amor!\n\nGet paid for connecting, creating and having fun online.\n 💖Getting matched → earn $2.5 to $5 per match\n🔥Daily login streaks → earn $1.5 daily for simply logging in\n🧠Daily trivia & quizzes → earn $1–$5 depending on score\n🎮Game modules → earn up to $20 for every game played\n🏆Challenges → earn up to $100 for every weekly challenge\n👥Invite friends and more!\n\nChoose from the exclusive list of packages with the higher package unlockng the full Miamor experience\nClick the button below to:",
+        "Welcome to Mi’amor!\n\nGet paid for connecting, creating and having fun online.\n"
+        " 💖Getting matched → earn $2.5 to $5 per match\n"
+        "🔥Daily login streaks → earn $1.5 daily for simply logging in\n"
+        "🧠Daily trivia & quizzes → earn $1–$5 depending on score\n"
+        "🎮Game modules → earn up to $20 for every game played\n"
+        "🏆Challenges → earn up to $100 for every weekly challenge\n"
+        "👥Invite friends and more!\n\n"
+        "Choose from the exclusive list of packages with the higher package unlocking the full Miamor experience\n"
+        "Click the button below to:",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
 
@@ -156,11 +173,11 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         x_count = cursor.fetchone()[0]
         total = standard_count + x_count
         cursor.execute("""
-        SELECT chat_id, package, registration_date 
-        FROM users 
-        WHERE payment_status='registered' 
-        ORDER BY registration_date DESC 
-        LIMIT 10
+            SELECT chat_id, package, registration_date
+            FROM users
+            WHERE payment_status='registered'
+            ORDER BY registration_date DESC
+            LIMIT 10
         """)
         last_users = cursor.fetchall()
         text = f"📊 Admin Stats:\n\n• Standard Users: {standard_count}\n• X Users: {x_count}\n• Total Registrations: {total}\n\nLast 10 Registrations:\n"
@@ -191,8 +208,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(chat_id, "You are already registered.")
                 return
             keyboard = [
-                [InlineKeyboardButton("🚀Miamor Ultra (₦14,000)", callback_data="reg_x")],
-                [InlineKeyboardButton("✈️Miamor Plus (₦9,000)", callback_data="reg_standard")],
+                [InlineKeyboardButton("🚀 Miamor Ultra (₦14,000)", callback_data="reg_x")],
+                [InlineKeyboardButton("✈️ Miamor Plus (₦9,000)", callback_data="reg_standard")],
                 [InlineKeyboardButton("🔙 Main Menu", callback_data="menu")],
             ]
             await query.edit_message_text("Choose your package:", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -202,7 +219,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 cursor.execute("UPDATE users SET package=%s, payment_status='pending_payment' WHERE chat_id=%s", (package, chat_id))
                 if cursor.rowcount == 0:
-                    cursor.execute("INSERT INTO users (chat_id, package, payment_status, username) VALUES (%s, %s, 'pending_payment', %s)", (chat_id, package, update.effective_user.username or "Unknown"))
+                    cursor.execute(
+                        "INSERT INTO users (chat_id, package, payment_status, username) VALUES (%s, %s, 'pending_payment', %s)",
+                        (chat_id, package, update.effective_user.username or "Unknown")
+                    )
                 conn.commit()
                 keyboard = [[InlineKeyboardButton(a, callback_data=f"reg_account_{a}")] for a in PAYMENT_ACCOUNTS.keys()]
                 keyboard.append([InlineKeyboardButton("🔙 Main Menu", callback_data="menu")])
@@ -215,7 +235,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             account = data[len("reg_account_"):]
             payment_details = PAYMENT_ACCOUNTS.get(account)
             if not payment_details:
-                await context.bot.send_message(chat_id, "Error: Invalid account. Contact admin.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]]))
+                await context.bot.send_message(
+                    chat_id, "Error: Invalid account. Contact admin.",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]])
+                )
                 return
             user_state[chat_id]['selected_account'] = account
             user_state[chat_id]['expecting'] = 'reg_screenshot'
@@ -231,7 +254,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif data == "show_account_selection":
             package = user_state[chat_id].get('package', '')
             if not package:
-                await query.edit_message_text("Please select a package first.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]]))
+                await query.edit_message_text(
+                    "Please select a package first.",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]])
+                )
                 return
             keyboard = [[InlineKeyboardButton(a, callback_data=f"reg_account_{a}")] for a in PAYMENT_ACCOUNTS.keys()]
             keyboard.append([InlineKeyboardButton("🔙 Main Menu", callback_data="menu")])
@@ -239,11 +265,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif data.startswith("approve_reg_"):
             user_chat_id = int(data.split("_")[2])
             try:
-                cursor.execute("UPDATE users SET payment_status='pending_details', approved_at=%s WHERE chat_id=%s", (datetime.datetime.now(), user_chat_id))
+                cursor.execute(
+                    "UPDATE users SET payment_status='pending_details', approved_at=%s WHERE chat_id=%s",
+                    (datetime.datetime.now(), user_chat_id)
+                )
                 conn.commit()
                 await context.bot.send_message(
                     user_chat_id,
-                    "✅ Your payment is approved!\n\nPlease send your details:\n➡️ Email address\n➡️ Full name\n➡️ Username (e.g. @you)\n➡️ Phone number (with country code)\n\nAll in one message, each on its own line."
+                    "✅ Your payment is approved!\n\nPlease send your details:\n"
+                    "➡️ Email address\n➡️ Full name\n➡️ Username (e.g. @you)\n➡️ Phone number (with country code)\n\n"
+                    "All in one message, each on its own line."
                 )
                 await query.edit_message_text("Payment approved. Waiting for user details.")
             except psycopg.Error as e:
@@ -267,7 +298,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text = f"Access your special Ultra content here: {AI_BOOST_LINK}"
             else:
                 text = f"Access your content here: {SITE_LINK}"
-            await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]]))
+            await query.edit_message_text(
+                text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]])
+            )
         elif data in HELP_TOPICS:
             topic = HELP_TOPICS[data]
             keyboard = [[InlineKeyboardButton("🔙 Help Menu", callback_data="help")]]
@@ -291,8 +324,10 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo_file = update.message.photo[-1].file_id
     try:
         if expecting == 'reg_screenshot':
-            cursor.execute("INSERT INTO payments (chat_id, package, payment_account) VALUES (%s, %s, %s) RETURNING id",
-                           (chat_id, user_state[chat_id]['package'], user_state[chat_id]['selected_account']))
+            cursor.execute(
+                "INSERT INTO payments (chat_id, package, payment_account) VALUES (%s, %s, %s) RETURNING id",
+                (chat_id, user_state[chat_id]['package'], user_state[chat_id]['selected_account'])
+            )
             payment_id = cursor.fetchone()[0]
             conn.commit()
             keyboard = [
@@ -307,7 +342,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("✅ Screenshot received! Awaiting admin approval.")
             del user_state[chat_id]['expecting']
-        log_interaction(chat_id, "photo_upload")
+            log_interaction(chat_id, "photo_upload")
     except Exception as e:
         logger.error(f"Error in handle_photo: {e}")
         await update.message.reply_text("An error occurred. Please try again or contact admin.")
@@ -337,44 +372,44 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 await update.message.reply_text("Credentials set and sent to the user.")
                 del user_state[chat_id]
+            else:
+                status = get_status(chat_id)
+                if status == 'pending_details':
+                    lines = [l.strip() for l in text.splitlines() if l.strip()]
+                    if len(lines) < 4:
+                        await update.message.reply_text("❗️ Please send all four lines.")
+                        return
+                    email, full_name, username, phone = lines[:4]
+                    if not re.match(r"[^@]+@[^@]+.[^@]+", email):
+                        await update.message.reply_text("❗️ Invalid email.")
+                        return
+                    if not username.startswith('@'):
+                        await update.message.reply_text("❗️ Username must start with @.")
+                        return
+                    try:
+                        cursor.execute(
+                            "UPDATE users SET email=%s, name=%s, username=%s, phone=%s WHERE chat_id=%s",
+                            (email, full_name, username, phone, chat_id)
+                        )
+                        conn.commit()
+                        cursor.execute("SELECT package FROM users WHERE chat_id=%s", (chat_id,))
+                        pkg = cursor.fetchone()[0]
+                        keyboard = [[InlineKeyboardButton("Finalize Registration", callback_data=f"finalize_reg_{chat_id}")]]
+                        await context.bot.send_message(
+                            ADMIN_ID,
+                            f"🆕 User Details Received:\nUser ID: {chat_id}\nUsername: {username}\nPackage: {pkg}\nEmail: {email}\nName: {full_name}\nPhone: {phone}",
+                            reply_markup=InlineKeyboardMarkup(keyboard)
+                        )
+                        await update.message.reply_text(
+                            "✅ Details received! Awaiting admin finalization.",
+                            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]])
+                        )
+                    except psycopg.Error as e:
+                        logger.error(f"Database error in pending_details: {e}")
+                        await update.message.reply_text("An error occurred. Please try again.")
         except Exception as e:
             logger.error(f"Error in handle_text: {e}")
             await update.message.reply_text("An error occurred. Please try again or contact admin.")
-    else:
-        status = get_status(chat_id)
-        if status == 'pending_details':
-            lines = [l.strip() for l in text.splitlines() if l.strip()]
-            if len(lines) < 4:
-                await update.message.reply_text("❗️ Please send all four lines.")
-                return
-            email, full_name, username, phone = lines[:4]
-            if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-                await update.message.reply_text("❗️ Invalid email.")
-                return
-            if not username.startswith('@'):
-                await update.message.reply_text("❗️ Username must start with @.")
-                return
-            try:
-                cursor.execute(
-                    "UPDATE users SET email=%s, name=%s, username=%s, phone=%s WHERE chat_id=%s",
-                    (email, full_name, username, phone, chat_id)
-                )
-                conn.commit()
-                cursor.execute("SELECT package FROM users WHERE chat_id=%s", (chat_id,))
-                pkg = cursor.fetchone()[0]
-                keyboard = [[InlineKeyboardButton("Finalize Registration", callback_data=f"finalize_reg_{chat_id}")]]
-                await context.bot.send_message(
-                    ADMIN_ID,
-                    f"🆕 User Details Received:\nUser ID: {chat_id}\nUsername: {username}\nPackage: {pkg}\nEmail: {email}\nName: {full_name}\nPhone: {phone}",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
-                await update.message.reply_text(
-                    "✅ Details received! Awaiting admin finalization.",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Main Menu", callback_data="menu")]])
-                )
-            except psycopg.Error as e:
-                logger.error(f"Database error in pending_details: {e}")
-                await update.message.reply_text("An error occurred. Please try again.")
 
 # Menus
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -383,7 +418,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cursor.execute("SELECT payment_status, package FROM users WHERE chat_id=%s", (chat_id,))
         user = cursor.fetchone()
         keyboard = [
-            [InlineKeyboardButton("💸 Proceed to Payment for Registeration", callback_data="package_selector")],
+            [InlineKeyboardButton("💸 Proceed to Payment for Registration", callback_data="package_selector")],
             [InlineKeyboardButton("❓ Help", callback_data="help")],
         ]
         if user and user[0] == 'registered':
@@ -391,7 +426,31 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("📂 Access Content", callback_data="access_content")],
                 [InlineKeyboardButton("❓ Help", callback_data="help")],
             ]
-        text = "🥰❤️💕LOVE is in the air with two packages to fuel your LOVE METER\n\n1. 𝚃𝚑𝚎 𝚙𝚕𝚞𝚜 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n2. 𝚃𝚑𝚎 𝚄𝚕𝚝𝚛𝚊 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n\nMIAMOR PLUS✨\n💰Access Fee/Signup Fee: N10,000\n💰 Onboarding Gift🎁: N8000\n💰Connection Commission/REF: N9100\n💰1st Level Spillover: N200\n💰2nd Level Spillover: N100\n💰Game modules: N2,000 daily\n💰Matching ads-on: N2,000 daily\n💰Open love hamper: N5,000 on every love box opened\n💰Tiktok/fb lovers share: N1,500 per 5,000 views.\n\nMIAMOR ULTRA\n💰Access Fee/Signup Fee: N14000\n💰 Onboarding Gift🎁: N12500\n💰Connection Commission/REF: N12500\n💰1st Level Spillover: N400\n💰2nd Level Spillover: N150\n💰Game modules: N5000 daily\n💰Matching ads-on: N3000 daily\n💰Open love hamper: N10,000 on every love hamper/box opened\n💰Tiktok/fb lovers share: N2500 per 5,000 views.\n\n Make a selection in the next menu to get started on your earnings"
+        text = (
+            "🥰❤️💕 LOVE is in the air with two packages to fuel your LOVE METER\n\n"
+            "1. 𝚃𝚑𝚎 𝚙𝚕𝚞𝚜 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n2. 𝚃𝚑𝚎 𝚄𝚕𝚝𝚛𝚊 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n\n"
+            "MIAMOR PLUS✨\n"
+            "💰 Access Fee/Signup Fee: ₦10,000\n"
+            "💰 Onboarding Gift🎁: ₦8,000\n"
+            "💰 Connection Commission/REF: ₦9,100\n"
+            "💰 1st Level Spillover: ₦200\n"
+            "💰 2nd Level Spillover: ₦100\n"
+            "💰 Game modules: ₦2,000 daily\n"
+            "💰 Matching ads-on: ₦2,000 daily\n"
+            "💰 Open love hamper: ₦5,000 on every love box opened\n"
+            "💰 Tiktok/fb lovers share: ₦1,500 per 5,000 views.\n\n"
+            "MIAMOR ULTRA\n"
+            "💰 Access Fee/Signup Fee: ₦14,000\n"
+            "💰 Onboarding Gift🎁: ₦12,500\n"
+            "💰 Connection Commission/REF: ₦12,500\n"
+            "💰 1st Level Spillover: ₦400\n"
+            "💰 2nd Level Spillover: ₦150\n"
+            "💰 Game modules: ₦5,000 daily\n"
+            "💰 Matching ads-on: ₦3,000 daily\n"
+            "💰 Open love hamper: ₦10,000 on every love hamper/box opened\n"
+            "💰 Tiktok/fb lovers share: ₦2,500 per 5,000 views.\n\n"
+            "Make a selection in the next menu to get started on your earnings"
+        )
         if update.callback_query:
             await update.callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
