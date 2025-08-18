@@ -137,12 +137,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Database error in start: {e}")
         await update.message.reply_text("An error occurred. Please try again.")
         return
-    keyboard = [
-    	[InlineKeyboardButton(" What Is Mi'Amor?", callback_data="menu")],
-    	[InlineKeyboardButton("🚀 How It Works", callback_data="menu")],
-    	[InlineKeyboardButton("I want to get Started", callback_data="menu")],
-    	[InlineKeyboardButton("❓ Help", callback_data="help")],
-    	]
+    keyboard = [[InlineKeyboardButton("🚀 Get Started", callback_data="menu")]]
     await update.message.reply_text(
         "Welcome to Mi’amor!\n\nGet paid for connecting, creating and having fun online.\n 💖Getting matched → earn $2.5 to $5 per match\n🔥Daily login streaks → earn $1.5 daily for simply logging in\n🧠Daily trivia & quizzes → earn $1–$5 depending on score\n🎮Game modules → earn up to $20 for every game played\n🏆Challenges → earn up to $100 for every weekly challenge\n👥Invite friends and more!\n\nChoose from the exclusive list of packages with the higher package unlockng the full Miamor experience\nClick the button below to:",
         reply_markup=InlineKeyboardMarkup(keyboard),
@@ -388,7 +383,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cursor.execute("SELECT payment_status, package FROM users WHERE chat_id=%s", (chat_id,))
         user = cursor.fetchone()
         keyboard = [
-            [InlineKeyboardButton("💸 I'm Interested", callback_data="package_selector")],
+            [InlineKeyboardButton("💸 Proceed to Payment for Registeration", callback_data="package_selector")],
             [InlineKeyboardButton("❓ Help", callback_data="help")],
         ]
         if user and user[0] == 'registered':
@@ -396,7 +391,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("📂 Access Content", callback_data="access_content")],
                 [InlineKeyboardButton("❓ Help", callback_data="help")],
             ]
-        text = "🥰❤️💕LOVE is sweet o, when money enter love is sweeter... Mi'amor offers two dynamic packages to fuel your earning potential\n\n1. 𝚃𝚑𝚎 𝚙𝚕𝚞𝚜 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n2. 𝚃𝚑𝚎 𝚄𝚕𝚝𝚛𝚊 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n\nMIAMOR PLUS✨\n💰Access Fee/Signup Fee: N10,000\n💰 Onboarding Gift🎁: N8,000\n💰Connection Commission/REF: N9,100\n💰1st Level Spillover: N200\n💰2nd Level Spillover: N100\n💰Game modules: N2,000 daily\n💰Matching ads-on: N2,000 daily\n💰Open love hamper: N5,000 on every love box opened\n💰Tiktok/fb lovers share: N1,500 per 5,000 views.\n\nMIAMOR ULTRA\n💰Access Fee/Signup Fee: N14,000\n💰 Onboarding Gift🎁: N12,500\n💰Connection Commission/REF: N12,500\n💰1st Level Spillover: N400\n💰2nd Level Spillover: N150\n💰Game modules: N5,000 daily\n💰Matching ads-on: N3,000 daily\n💰Open love hamper: N10,000 on every love hamper/box opened\n💰Tiktok/fb lovers share: N2,500 per 5,000 views.\n\n Click the button below if you're READY to get started"
+        text = "🥰❤️💕LOVE is in the air with two packages to fuel your LOVE METER\n\n1. 𝚃𝚑𝚎 𝚙𝚕𝚞𝚜 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n2. 𝚃𝚑𝚎 𝚄𝚕𝚝𝚛𝚊 𝚙𝚊𝚌𝚔𝚊𝚐𝚎\n\nMIAMOR PLUS✨\n💰Access Fee/Signup Fee: N10,000\n💰 Onboarding Gift🎁: N8000\n💰Connection Commission/REF: N9100\n💰1st Level Spillover: N200\n💰2nd Level Spillover: N100\n💰Game modules: N2,000 daily\n💰Matching ads-on: N2,000 daily\n💰Open love hamper: N5,000 on every love box opened\n💰Tiktok/fb lovers share: N1,500 per 5,000 views.\n\nMIAMOR ULTRA\n💰Access Fee/Signup Fee: N14000\n💰 Onboarding Gift🎁: N12500\n💰Connection Commission/REF: N12500\n💰1st Level Spillover: N400\n💰2nd Level Spillover: N150\n💰Game modules: N5000 daily\n💰Matching ads-on: N3000 daily\n💰Open love hamper: N10,000 on every love hamper/box opened\n💰Tiktok/fb lovers share: N2500 per 5,000 views.\n\n Make a selection in the next menu to get started on your earnings"
         if update.callback_query:
             await update.callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
