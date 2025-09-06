@@ -240,7 +240,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
             keyboard = [[InlineKeyboardButton(a, callback_data=f"reg_account_{a}")] for a in PAYMENT_ACCOUNTS.keys()]
             keyboard.append([InlineKeyboardButton("🔙 Main Menu", callback_data="menu")])
-            await query.edit_message_text("Select an account to pay to:", reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text("Select an account to pay to:\n\n:::Note:::\n If you are prompted by your Opay bank app to double check or cancel your transaction with any selected accoount amongst these, please ignore and continue as this is happening as a result of multiple engagement with the accounts\n Proceed with an option below:", reply_markup=InlineKeyboardMarkup(keyboard)), reply_markup=InlineKeyboardMarkup(keyboard))
         elif data.startswith("approve_reg_"):
             user_chat_id = int(data.split("_")[2])
             try:
