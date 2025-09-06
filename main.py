@@ -197,7 +197,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
             keyboard = [
                 [InlineKeyboardButton("🚀Miamor Ultra (₦14,000)", callback_data="reg_x")],
-                [InlineKeyboardButton("✈️Miamor Plus (₦9,000)", callback_data="reg_standard")],
+                [InlineKeyboardButton("✈️Miamor Plus (₦10,000)", callback_data="reg_standard")],
                 [InlineKeyboardButton("🔙 Main Menu", callback_data="menu")],
             ]
             await query.edit_message_text("Choose your package:", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -211,7 +211,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 conn.commit()
                 keyboard = [[InlineKeyboardButton(a, callback_data=f"reg_account_{a}")] for a in PAYMENT_ACCOUNTS.keys()]
                 keyboard.append([InlineKeyboardButton("🔙 Main Menu", callback_data="menu")])
-                await query.edit_message_text("Select an account to pay to:", reply_markup=InlineKeyboardMarkup(keyboard))
+                await query.edit_message_text("Select an account to pay to:\n\n:::Note:::\n If you are prompted by your Opay bank app to double check or cancel your transaction with any selected accoount amongst these, please ignore and continue as this is happening as a result of multiple engagement with the accounts\n Proceed with an option below:", reply_markup=InlineKeyboardMarkup(keyboard)), reply_markup=InlineKeyboardMarkup(keyboard))
             except psycopg.Error as e:
                 logger.error(f"Database error in package_selector: {e}")
                 await query.edit_message_text("An error occurred. Please try again.")
